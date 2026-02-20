@@ -2,7 +2,7 @@ const POLL_INTERVAL_MS = 30000; // 30 seconds
 
 function getApiBase() {
   const base = window.GPU_DASHBOARD_API;
-  if (base && base !== "https://YOUR-TUNNEL-URL.trycloudflare.com") {
+  if (base && base !== "https://more-saying-bent-topics.trycloudflare.com") {
     return base.replace(/\/$/, "");
   }
   return ""; // same origin

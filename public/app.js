@@ -7,7 +7,8 @@ function getApiBase() {
   if (qs) return qs.replace(/\/$/, "");
 
   const base = window.GPU_DASHBOARD_API;
-  if (base && base !== "https://more-saying-bent-topics.trycloudflare.com") {
+  const placeholder = "https://YOUR-TUNNEL-URL.trycloudflare.com";
+  if (base && base !== placeholder) {
     return base.replace(/\/$/, "");
   }
   return ""; // same origin

@@ -18,6 +18,10 @@
     <div id="grid" class="grid"></div>
     <div id="loading" class="loading">Collecting GPU status from nodes…</div>
   </main>
+  <script>
+    // Default backend URL (edit when your tunnel URL changes)
+    window.GPU_DASHBOARD_API = window.GPU_DASHBOARD_API || "https://YOUR-TUNNEL-URL.trycloudflare.com";
+  </script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

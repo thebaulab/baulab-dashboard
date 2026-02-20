@@ -4,7 +4,12 @@ from flask import Flask, jsonify, render_template
 
 from .collector import get_status, start_collector
 
-app = Flask(__name__, static_folder="../static", template_folder="../templates")
+app = Flask(
+    __name__,
+    static_folder="../public",
+    static_url_path="",
+    template_folder="../public",
+)
 
 
 @app.after_request

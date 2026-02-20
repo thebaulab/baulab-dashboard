@@ -24,11 +24,32 @@ class NodeStatus:
 
     status: str  # "ok" | "error"
     gpus: list[dict] = field(default_factory=list)
+    users: list[str] = field(default_factory=list)
     message: str | None = None
+
+
+def _parse_users(output: str) -> list[str]:
+    """Parse users from '---USERS---' section (comma-separated)."""
+    if "---USERS---" not in output:
+        return []
+    parts = output.split("---USERS---", 1)
+    if len(parts) < 2:
+        return []
+    raw = parts[1].strip().strip(",")
+    if not raw:
+        return []
+    return [u.strip() for u in raw.split(",") if u.strip()]
 
 
 def _query_node(host: str) -> NodeStatus:
     """Run nvidia-smi on a single node via SSH via jump host."""
+    # Get GPU stats + users (PIDs -> ps for username) in one SSH
+    remote_cmd = (
+        f"nvidia-smi --query-gpu={NVIDIA_SMI_QUERY} --format={NVIDIA_SMI_FORMAT} 2>/dev/null; "
+        "echo '---USERS---'; "
+        "nvidia-smi --query-compute-apps=pid --format=csv,noheader,nounits 2>/dev/null | "
+        "tr -d ' ' | grep -E '^[0-9]+$' | xargs -I {} ps -o user= -p {} 2>/dev/null | sort -u | tr '\\n' ','"
+    )
     cmd = [
         "ssh",
         "-l",
@@ -42,9 +63,7 @@ def _query_node(host: str) -> NodeStatus:
         "-o",
         "BatchMode=yes",
         host,
-        "nvidia-smi",
-        f"--query-gpu={NVIDIA_SMI_QUERY}",
-        f"--format={NVIDIA_SMI_FORMAT}",
+        remote_cmd,
     ]
     try:
         result = subprocess.run(
@@ -56,7 +75,10 @@ def _query_node(host: str) -> NodeStatus:
         if result.returncode != 0:
             stderr = result.stderr.strip() or result.stdout.strip()
             return NodeStatus(status="error", message=stderr[:200] or "nvidia-smi failed")
-        gpus = parse_nvidia_smi_output(result.stdout)
+        stdout = result.stdout
+        gpu_output = stdout.split("---USERS---")[0].strip()
+        users = _parse_users(stdout)
+        gpus = parse_nvidia_smi_output(gpu_output)
         return NodeStatus(
             status="ok",
             gpus=[
@@ -70,6 +92,7 @@ def _query_node(host: str) -> NodeStatus:
                 }
                 for g in gpus
             ],
+            users=users,
         )
     except subprocess.TimeoutExpired:
         return NodeStatus(status="error", message="Connection timeout")
@@ -126,6 +149,7 @@ def _update_cache():
             node: {
                 "status": ns.status,
                 "gpus": ns.gpus,
+                "users": getattr(ns, "users", []) or [],
                 "message": ns.message,
             }
             for node, ns in data.items()

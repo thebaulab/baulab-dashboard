@@ -38,6 +38,12 @@ function renderNode(name, data) {
     return card;
   }
 
+  const users = data.users || [];
+  const usersTip =
+    users.length > 0
+      ? `Users: ${users.join(", ")}`
+      : "No GPU processes running";
+
   const gpus = data.gpus || [];
   const gpuRows = gpus
     .map(
@@ -55,6 +61,8 @@ function renderNode(name, data) {
   card.innerHTML = `
     <h2>${escapeHtml(name)}</h2>
     <div class="gpu-list">${gpuRows || "<span class='text-muted'>No GPUs</span>"}</div>
+    <div class="users-hint">Hover for users</div>
+    <div class="users-tooltip">${escapeHtml(usersTip)}</div>
   `;
   return card;
 }

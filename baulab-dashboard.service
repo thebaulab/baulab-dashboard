@@ -1,0 +1,26 @@
+[Unit]
+Description=Baulab GPU Dashboard (Flask + cloudflared)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Edit paths to match your setup
+WorkingDirectory=%h/code/baulab-dashboard
+ExecStart=%h/code/baulab-dashboard/start-dashboard.sh
+Restart=always
+RestartSec=120
+
+# PATH for uv, cloudflared (systemd has minimal env)
+Environment=HOME=%h
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+# SSH passphrase for git push (optional). Create the env file from baulab-dashboard.env.example
+EnvironmentFile=-%h/.config/baulab-dashboard/env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=baulab-dashboard
+
+[Install]
+WantedBy=default.target

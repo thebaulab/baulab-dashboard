@@ -34,6 +34,61 @@ uv run python -m src.main
 
 The tunnel prints a URL like `https://random-name.trycloudflare.com` — open it in a browser. No Cloudflare account required.
 
+### 4. Always-on (systemd, survives reboot)
+
+To run the dashboard automatically on boot with Flask + cloudflared + auto-push URL to GitHub:
+
+**1. Configure the env file**
+
+```bash
+mkdir -p ~/.config/baulab-dashboard
+nano ~/.config/baulab-dashboard/env
+```
+
+**Option A: Cloudflare named tunnel (recommended)** — no rate limits, stable URL:
+```
+CLOUDFLARE_TUNNEL_TOKEN=eyJ...
+CLOUDFLARE_TUNNEL_URL=https://your-tunnel.example.com
+BAULAB_SSH_PASSPHRASE_FILE=/path/to/.config/baulab-dashboard/ssh-passphrase
+```
+
+**Option B: Quick tunnel** — requires SSH passphrase for git push:
+```
+BAULAB_SSH_PASSPHRASE_FILE=/path/to/.config/baulab-dashboard/ssh-passphrase
+```
+
+**2. Install the systemd user service**
+
+```bash
+cd /path/to/gpu-dashboard  # or baulab-dashboard
+
+mkdir -p ~/.config/systemd/user
+cp baulab-dashboard.service ~/.config/systemd/user/
+
+# Edit the service file: update WorkingDirectory, ExecStart, and EnvironmentFile
+# to match your paths (e.g. ~/code/baulab-dashboard)
+nano ~/.config/systemd/user/baulab-dashboard.service
+
+systemctl --user daemon-reload
+systemctl --user enable baulab-dashboard
+systemctl --user start baulab-dashboard
+```
+
+**3. Enable user services at boot (without login)**
+
+```bash
+loginctl enable-linger
+```
+
+**4. Verify**
+
+```bash
+systemctl --user status baulab-dashboard
+journalctl --user -u baulab-dashboard -f
+```
+
+Startup logs are also written to `/tmp/baulab-dashboard-startup.log`.
+
 ## How it works
 
 - A background thread runs `nvidia-smi` on each node every 60 seconds via SSH

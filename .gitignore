@@ -2,3 +2,10 @@
 __pycache__/
 *.pyc
 .python-version
+
+# Env and secrets (service config with SSH passphrase, tunnel token)
+.env
+env
+*.env
+*-passphrase
+*token*
